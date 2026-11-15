@@ -44,9 +44,12 @@ export default function App() {
   return (
     <div className="app">
       <aside className="panel">
-        <header>
-          <h1>Weather-Aware Truck Routing</h1>
-          <p>Compare three routes by weather risk at your arrival time, load weight and travel time.</p>
+        <header className="brand">
+          <div className="logo" aria-hidden="true">⛅</div>
+          <div>
+            <h1>Weather-Aware Truck Routing</h1>
+            <p>Compare 3 routes by weather risk at your arrival time, load and travel time.</p>
+          </div>
         </header>
         <SearchForm loading={loading} onSubmit={run} />
         {error && <div className="banner error" role="alert">{error}</div>}

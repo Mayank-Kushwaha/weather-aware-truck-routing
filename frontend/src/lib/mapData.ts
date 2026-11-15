@@ -53,9 +53,13 @@ export function heatGeoJSON(result: AnalyzeResult): FeatureCollection<Point> {
   return { type: "FeatureCollection", features };
 }
 
-/** Heat weight for the chosen hour: risk score 0-4 scaled to 0-1 (Low adds no heat). */
+/**
+ * Heat weight for the chosen hour. Risk score 0-4 maps to 0.15-1.0 so Low still shows a faint
+ * corridor; points with no forecast data (no property) get no heat.
+ */
 export function heatWeightExpression(hour: number) {
-  return ["/", ["coalesce", ["get", `h${hour}`], 0], 4];
+  const key = `h${hour}`;
+  return ["case", ["has", key], ["+", 0.15, ["*", 0.2125, ["get", key]]], 0];
 }
 
 export function boundsOf(routes: Route[]): [[number, number], [number, number]] {

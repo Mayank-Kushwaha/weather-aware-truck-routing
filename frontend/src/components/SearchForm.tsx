@@ -65,7 +65,10 @@ export function SearchForm({ loading, onSubmit }: Props) {
         </div>
       </fieldset>
       {problem && <p className="err" role="alert">{problem}</p>}
-      <button type="submit" disabled={loading}>{loading ? "Analyzing routes…" : "Find safest route"}</button>
+      <button type="submit" disabled={loading}>
+        {loading && <span className="spinner" aria-hidden="true" />}
+        {loading ? "Analyzing routes…" : "Find safest route"}
+      </button>
     </form>
   );
 }

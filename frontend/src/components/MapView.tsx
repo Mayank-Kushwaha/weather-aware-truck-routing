@@ -53,16 +53,17 @@ function heatLayer(hour: number): LayerProps {
     type: "heatmap",
     paint: {
       "heatmap-weight": heatWeightExpression(hour) as never,
-      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 3, 0.9, 9, 1.6],
+      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 9, 1],
       "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 3, 14, 5, 30, 7, 70, 9, 140, 11, 200],
       "heatmap-opacity": 0.85,
       "heatmap-color": [
         "interpolate", ["linear"], ["heatmap-density"],
         0, "rgba(46,158,91,0)",
-        0.1, "rgba(46,158,91,0.35)",
-        0.3, "rgba(224,180,0,0.6)",
-        0.5, "rgba(240,138,36,0.7)",
-        0.75, "rgba(217,54,54,0.8)",
+        0.06, "rgba(46,158,91,0.35)",
+        0.22, "rgba(46,158,91,0.55)",
+        0.36, "rgba(224,180,0,0.65)",
+        0.55, "rgba(240,138,36,0.72)",
+        0.78, "rgba(217,54,54,0.8)",
         1, "rgba(59,10,69,0.9)",
       ],
     },
@@ -169,6 +170,7 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
           />
           <div className="sliderlabel">
             <strong>{hour === 0 ? "Departure" : `+${hour} h`}</strong> · {hourLabel(result.departure, hour)}
+            <span className="muted"> · forecast along the routes</span>
           </div>
         </div>
       )}

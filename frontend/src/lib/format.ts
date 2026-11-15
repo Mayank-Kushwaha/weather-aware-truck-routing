@@ -39,6 +39,11 @@ export function toLocalInputValue(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/** Compact time for tables: "Mon 12:40 AM". */
+export function formatShort(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });
+}
+
 export function hourLabel(departureIso: string, hour: number): string {
   const t = new Date(new Date(departureIso).getTime() + hour * 3_600_000);
   return t.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });

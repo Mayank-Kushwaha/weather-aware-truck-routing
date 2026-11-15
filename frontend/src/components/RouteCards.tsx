@@ -29,32 +29,45 @@ function RiskBar({ route }: { route: Route }) {
   );
 }
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="stat">
+      <span className="stat-v">{value}</span>
+      <span className="stat-l">{label}</span>
+    </div>
+  );
+}
+
 export function RouteCards({ result, selectedId, onSelect }: Props) {
   const fastest = result.routes.reduce((a, b) => (b.duration_s < a.duration_s ? b : a)).id;
   return (
     <section aria-label="Route options" className="routes">
       {result.routes.map((r) => (
         <button key={r.id} className={`card route ${r.id === selectedId ? "selected" : ""}`} onClick={() => onSelect(r.id)} aria-pressed={r.id === selectedId}>
-          <span className="swatch" style={{ background: routeColor(r.rank) }} />
           <div className="head">
-            <strong>Route {r.rank}</strong>
-            {r.id === result.recommended_id && <span className="badge good">Recommended</span>}
-            {r.id === fastest && <span className="badge">Fastest</span>}
-            {r.no_travel && <span className="badge bad">No Travel zone</span>}
+            <span className="rank" style={{ background: routeColor(r.rank) }}>{r.rank}</span>
+            <div className="title">
+              <strong>Route {r.rank}</strong>
+              <span className="sub">via {r.summary}</span>
+            </div>
+            <div className="badges">
+              {r.id === result.recommended_id && <span className="badge good">Recommended</span>}
+              {r.id === fastest && <span className="badge">Fastest</span>}
+              {r.no_travel && <span className="badge bad">No Travel</span>}
+            </div>
           </div>
-          <div className="sub">via {r.summary}</div>
-          <div className="metrics">
-            <span>{formatMiles(r.distance_mi)}</span>
-            <span>{formatDuration(r.duration_s)}</span>
-            <span>Arrive {formatDateTime(r.eta)}</span>
+          <div className="stats">
+            <Stat label="Distance" value={formatMiles(r.distance_mi)} />
+            <Stat label="Drive time" value={formatDuration(r.duration_s)} />
+            <Stat label="Arrive" value={formatDateTime(r.eta)} />
           </div>
           <RiskBar route={r} />
           <div className="riskstats">
-            <span>Severe {formatMiles(r.stats.severe_mi)}</span>
-            <span>High {formatMiles(r.stats.high_mi)}</span>
-            <span>Avg risk {r.stats.avg_risk.toFixed(2)}/4</span>
+            <span>Severe <b>{formatMiles(r.stats.severe_mi)}</b></span>
+            <span>High <b>{formatMiles(r.stats.high_mi)}</b></span>
+            <span>Avg risk <b>{r.stats.avg_risk.toFixed(2)}/4</b></span>
           </div>
-          {r.reason && <p className="reason">{r.reason}</p>}
+          {r.reason && <p className="reason">✓ {r.reason}</p>}
         </button>
       ))}
     </section>

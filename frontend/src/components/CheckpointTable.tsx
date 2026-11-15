@@ -1,4 +1,4 @@
-import { LEVEL_COLOR, LEVEL_LABEL, driverLabel, formatDateTime } from "../lib/format";
+import { LEVEL_COLOR, LEVEL_LABEL, driverLabel, formatShort } from "../lib/format";
 import type { Route } from "../types";
 
 interface Props {
@@ -9,13 +9,16 @@ interface Props {
 
 export function CheckpointTable({ route, focusIndex, onFocus }: Props) {
   return (
-    <section className="card" aria-label="Checkpoints">
-      <h3>Route {route.rank} checkpoints</h3>
+    <section className="card checkpoints" aria-label="Checkpoints">
+      <div className="cp-head">
+        <h3>Route {route.rank} checkpoints</h3>
+        <span className="muted">{route.checkpoints.length} stops · tap a row to locate</span>
+      </div>
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
-              <th>Mile</th>
+              <th>Mi</th>
               <th>ETA</th>
               <th>Risk</th>
               <th>Wind</th>
@@ -26,19 +29,20 @@ export function CheckpointTable({ route, focusIndex, onFocus }: Props) {
           <tbody>
             {route.checkpoints.map((c, i) => (
               <tr key={c.mile} className={i === focusIndex ? "focus" : ""} onClick={() => onFocus(i)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onFocus(i)}>
-                <td>{c.mile}</td>
-                <td>{formatDateTime(c.eta)}</td>
+                <td className="num">{c.mile}</td>
+                <td>{formatShort(c.eta)}</td>
                 <td>
                   <span className="pill" style={{ background: LEVEL_COLOR[c.level] }} title={driverLabel(c.driver)}>{LEVEL_LABEL[c.level]}</span>
                 </td>
-                <td>{c.weather ? `${c.weather.wind_mph} mph` : "–"}</td>
-                <td>{c.weather ? `${c.weather.rain_in_hr} in/h` : "–"}</td>
-                <td>{c.weather ? `${c.weather.snow_in_hr} in/h` : "–"}</td>
+                <td className="num">{c.weather ? Math.round(c.weather.wind_mph) : "–"}</td>
+                <td className="num">{c.weather ? c.weather.rain_in_hr.toFixed(2) : "–"}</td>
+                <td className="num">{c.weather ? c.weather.snow_in_hr.toFixed(2) : "–"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <p className="units muted">Wind in mph · rain and snow in in/hr</p>
     </section>
   );
 }

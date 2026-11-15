@@ -18,7 +18,7 @@ describe("format", () => {
 
 describe("map data", () => {
   it("builds the heat weight expression for the slider hour", () => {
-    expect(heatWeightExpression(12)).toEqual(["/", ["coalesce", ["get", "h12"], 0], 4]);
+    expect(heatWeightExpression(12)).toEqual(["case", ["has", "h12"], ["+", 0.15, ["*", 0.2125, ["get", "h12"]]], 0]);
   });
   it("assigns stable route colors by rank", () => {
     expect(routeColor(1)).not.toBe(routeColor(2));
