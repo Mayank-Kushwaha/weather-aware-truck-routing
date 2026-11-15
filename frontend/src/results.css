@@ -1,0 +1,31 @@
+.banner { border-radius: 8px; padding: 9px 12px; font-size: 0.88rem; margin-bottom: 8px; }
+.banner.error { background: #fdecea; color: var(--bad); }
+.banner.warn { background: #fff6dd; color: #6b5200; }
+.skeleton { background: linear-gradient(90deg, #e8ecf0, #f6f8fa, #e8ecf0); background-size: 200% 100%; animation: sh 1.2s infinite; border-radius: 10px; padding: 28px 12px; text-align: center; color: var(--muted); }
+@keyframes sh { to { background-position: -200% 0; } }
+.dim { opacity: 0.55; pointer-events: none; transition: opacity 0.2s; }
+
+.routes { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.route { text-align: left; cursor: pointer; position: relative; padding-left: 18px; width: 100%; color: inherit; }
+.route.selected { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(11, 92, 255, 0.18); }
+.swatch { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; border-radius: 10px 0 0 10px; }
+.head { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.badge { font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: #e8ecf0; color: var(--muted); }
+.badge.good { background: #dff3e7; color: var(--good); }
+.badge.bad { background: #fdecea; color: var(--bad); }
+.sub { color: var(--muted); font-size: 0.85rem; margin: 2px 0 6px; }
+.metrics { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.9rem; font-weight: 600; }
+.riskbar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; margin: 8px 0 4px; background: #e8ecf0; }
+.riskbar span { display: block; height: 100%; }
+.riskstats { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); }
+.reason { margin: 8px 0 0; font-size: 0.85rem; color: var(--good); font-weight: 600; }
+
+.tablewrap { max-height: 320px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th { position: sticky; top: 0; background: #fff; text-align: left; color: var(--muted); padding: 4px 6px; }
+td { padding: 6px; border-top: 1px solid var(--line); white-space: nowrap; }
+tbody tr { cursor: pointer; }
+tbody tr:hover, tr.focus { background: #eef3ff; }
+.pill { color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+footer { color: var(--muted); font-size: 0.72rem; line-height: 1.4; margin-top: auto; padding-top: 8px; }
+footer a { color: inherit; }
