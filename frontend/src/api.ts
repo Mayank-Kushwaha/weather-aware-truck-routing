@@ -1,6 +1,7 @@
 import type { AnalyzeRequest, AnalyzeResult, Place } from "./types";
 
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
+/** API origin. Trailing slashes (and a stray "/api" suffix) are removed so paths never double up. */
+const BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").trim().replace(/\/+$/, "").replace(/\/api$/, "");
 
 export class ApiError extends Error {}
 
