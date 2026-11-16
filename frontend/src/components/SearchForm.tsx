@@ -12,10 +12,23 @@ const MAX_LOAD_LB = 80_000;
 const MAX_DAYS = 14;
 const INTERVALS = [10, 25, 50] as const;
 
+const EXAMPLE: { origin: Place; destination: Place } = {
+  origin: { label: "Chicago, Illinois, United States", lat: 41.881953, lng: -87.632362 },
+  destination: { label: "Denver, Colorado, United States", lat: 39.7392, lng: -104.9903 },
+};
+
 function defaultDeparture(): string {
   const d = new Date(Date.now() + 3_600_000);
   d.setMinutes(0, 0, 0);
   return toLocalInputValue(d);
+}
+
+/** Plain-language hint for which wind load rules apply at this weight. */
+function loadHint(lb: number): string {
+  if (!Number.isFinite(lb) || lb < 0) return "";
+  if (lb > 40_000) return "Over 40,000 lb: strictest wind limits apply";
+  if (lb > 30_000) return "Over 30,000 lb: heavy-load wind rule applies";
+  return "Light load: only the base wind limits apply";
 }
 
 export function SearchForm({ loading, onSubmit }: Props) {
@@ -25,6 +38,7 @@ export function SearchForm({ loading, onSubmit }: Props) {
   const [load, setLoad] = useState("40000");
   const [interval, setInterval_] = useState<10 | 25 | 50>(25);
   const [problem, setProblem] = useState<string | null>(null);
+  const [swapKey, setSwapKey] = useState(0);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -39,10 +53,28 @@ export function SearchForm({ loading, onSubmit }: Props) {
     onSubmit({ origin, destination, departure: dep.toISOString(), load_lb: loadLb, interval_mi: interval });
   };
 
+  const swap = () => {
+    setOrigin(destination);
+    setDestination(origin);
+    setSwapKey((k) => k + 1);
+  };
+
+  const useExample = () => {
+    setOrigin(EXAMPLE.origin);
+    setDestination(EXAMPLE.destination);
+    setProblem(null);
+  };
+
   return (
     <form className="card form" onSubmit={submit} noValidate>
-      <PlaceInput label="Origin" value={origin} onChange={setOrigin} />
-      <PlaceInput label="Destination" value={destination} onChange={setDestination} />
+      <div className="places">
+        <PlaceInput key={`o${swapKey}`} label="Origin" value={origin} onChange={setOrigin} />
+        <button type="button" className="swap" onClick={swap} aria-label="Swap origin and destination" title="Swap">⇅</button>
+        <PlaceInput key={`d${swapKey}`} label="Destination" value={destination} onChange={setDestination} />
+      </div>
+      {!origin && !destination && (
+        <button type="button" className="chip" onClick={useExample}>✨ Try an example: Chicago → Denver</button>
+      )}
       <div className="row">
         <div className="field">
           <label htmlFor="dep">Departure</label>
@@ -53,6 +85,7 @@ export function SearchForm({ loading, onSubmit }: Props) {
           <input id="load" type="number" inputMode="numeric" min={0} max={MAX_LOAD_LB} step={500} value={load} onChange={(e) => setLoad(e.target.value)} />
         </div>
       </div>
+      <p className="hint-text">{loadHint(Number(load))}</p>
       <fieldset className="field">
         <legend>Weather checkpoint every</legend>
         <div className="seg">

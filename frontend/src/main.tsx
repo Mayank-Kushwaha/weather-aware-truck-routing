@@ -5,6 +5,8 @@ import "./styles.css";
 import "./form.css";
 import "./results.css";
 import "./table.css";
+import "./form2.css";
+import "./anim.css";
 import "./map.css";
 
 createRoot(document.getElementById("root")!).render(

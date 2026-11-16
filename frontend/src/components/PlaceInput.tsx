@@ -17,6 +17,11 @@ export function PlaceInput({ label, value, onChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const seq = useRef(0);
 
+  // Keep the text in sync when the parent sets a place directly (example button).
+  useEffect(() => {
+    if (value) setText(value.label);
+  }, [value]);
+
   useEffect(() => {
     const q = text.trim();
     if (q.length < 3 || (value && value.label === text)) {

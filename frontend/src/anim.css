@@ -1,0 +1,62 @@
+/* Resizer */
+.resizer { position: relative; cursor: col-resize; background: transparent; touch-action: none; display: flex; align-items: center; justify-content: center; z-index: 5; margin: 0 -1px; }
+.resizer::before { content: ""; position: absolute; inset: 0 3px; border-radius: 99px; background: var(--line); transition: background 0.15s, inset 0.15s; }
+.resizer:hover::before, .resizer.active::before, .resizer:focus-visible::before { background: var(--brand); inset: 0 3px; }
+.resizer:focus-visible { outline: none; }
+.grip { position: relative; width: 4px; height: 38px; border-radius: 99px; background: #94a3b8; box-shadow: 0 0 0 3px #fff; transition: background 0.15s, height 0.2s, transform 0.2s; }
+.resizer:hover .grip, .resizer.active .grip, .resizer:focus-visible .grip { background: var(--brand); height: 56px; }
+.resizer.active .grip { transform: scaleX(1.3); }
+body.resizing { cursor: col-resize; user-select: none; }
+body.resizing .mapwrap { pointer-events: none; }
+body.resizing .panel { pointer-events: none; }
+
+/* Entrances */
+/* Individual transform properties (translate/scale) are used so they never fight hover/rotate transforms. */
+@keyframes rise { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes pop { 0% { scale: 0.6; opacity: 0; } 70% { scale: 1.08; } 100% { scale: 1; opacity: 1; } }
+@keyframes drop { 0% { translate: 0 -18px; opacity: 0; } 60% { translate: 0 2px; opacity: 1; } 100% { translate: 0 0; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+.brand { animation: fade 0.5s ease both; }
+.card { animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.route:nth-child(1) { animation-delay: 0.04s; }
+.route:nth-child(2) { animation-delay: 0.12s; }
+.route:nth-child(3) { animation-delay: 0.2s; }
+.skel { animation-delay: calc(var(--i, 0) * 90ms); }
+.riskbar { transform-origin: left center; }
+.riskbar span { transform-origin: left center; animation: grow 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.badge { animation: pop 0.35s 0.25s both; }
+.rank { transition: transform 0.2s; }
+.route:hover .rank { transform: rotate(-6deg) scale(1.08); }
+.route:active { transform: scale(0.995); }
+.pill { animation: pop 0.3s both; }
+.pin { animation: drop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.overlay { animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.maplibregl-popup-content { border-radius: 12px !important; box-shadow: 0 10px 28px rgba(15, 27, 45, 0.22) !important; animation: pop 0.2s both; }
+.results .banner { animation: rise 0.3s both; }
+
+/* Brand and loading feedback */
+.logo { transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.brand:hover .logo { transform: rotate(-5deg) scale(1.07); }
+.brand.busy .logo { animation: pulse 1s ease-in-out infinite; }
+
+/* Skeleton cards */
+.skel { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+.skel-line { height: 12px; border-radius: 99px; background: linear-gradient(90deg, #e6ebf2, #f6f8fb, #e6ebf2); background-size: 200% 100%; animation: sh 1.2s infinite; }
+.skel-line.w40 { width: 40%; height: 14px; }
+.skel-line.w100 { width: 100%; }
+.skel-line.thin { height: 8px; }
+.skel-row { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 6px; }
+.skel-row span { height: 38px; border-radius: 10px; background: linear-gradient(90deg, #e6ebf2, #f6f8fb, #e6ebf2); background-size: 200% 100%; animation: sh 1.2s infinite; }
+.center { text-align: center; margin: 4px 0 0; font-size: 0.82rem; }
+
+/* Primary button shine */
+form > button[type="submit"] { position: relative; overflow: hidden; }
+form > button[type="submit"]::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent); transform: skewX(-20deg); transition: left 0.6s; }
+form > button[type="submit"]:hover:not(:disabled)::after { left: 130%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+}

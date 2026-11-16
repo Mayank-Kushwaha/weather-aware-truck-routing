@@ -82,6 +82,23 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
   const line = useMemo(() => routeLine(selectedId), [selectedId]);
   const heatStyle = useMemo(() => heatLayer(hour), [hour]);
 
+  // Keep the canvas sized when the sidebar is dragged.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => mapRef.current?.resize());
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   useEffect(() => {
     if (!result) return;
     setHour(0);
@@ -94,7 +111,7 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
   }, [focused]);
 
   return (
-    <div className="mapwrap">
+    <div className="mapwrap" ref={wrapRef}>
       <Map
         ref={mapRef}
         mapLib={maplibregl}
