@@ -3,9 +3,11 @@ import * as maplibregl from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Layer, Marker, NavigationControl, Popup, Source, type LayerProps, type MapRef } from "react-map-gl/maplibre";
+import { useTrace } from "../hooks/useTrace";
 import { LEVEL_COLOR, LEVEL_LABEL, driverLabel, formatDateTime, hourLabel } from "../lib/format";
 import { boundsOf, checkpointsGeoJSON, heatGeoJSON, heatWeightExpression, routesGeoJSON } from "../lib/mapData";
 import type { AnalyzeResult, Place } from "../types";
+import { TracePanel } from "./TracePanel";
 
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -17,8 +19,10 @@ interface Props {
   destination: Place | null;
   selectedId: string;
   focusIndex: number | null;
+  traceOn: boolean;
   onSelect: (id: string) => void;
   onFocus: (i: number | null) => void;
+  onTraceClose: () => void;
 }
 
 const routeCasing: LayerProps = { id: "routes-casing", type: "line", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#fff", "line-width": 8, "line-opacity": 0.9 } };
@@ -36,16 +40,20 @@ function routeLine(selectedId: string): LayerProps {
   };
 }
 
-const checkpointLayer: LayerProps = {
-  id: "checkpoints",
-  type: "circle",
-  paint: {
-    "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 4, 8, 7, 12, 9],
-    "circle-color": ["get", "color"],
-    "circle-stroke-color": "#fff",
-    "circle-stroke-width": 2,
-  },
-};
+/** Checkpoint dots; the focused one is larger with a dark ring. */
+function checkpointLayer(focusIndex: number | null): LayerProps {
+  const at = ["==", ["get", "index"], focusIndex ?? -1];
+  return {
+    id: "checkpoints",
+    type: "circle",
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, ["case", at, 8, 4], 8, ["case", at, 11, 7], 12, ["case", at, 13, 9]],
+      "circle-color": ["get", "color"],
+      "circle-stroke-color": ["case", at, "#0f1b2d", "#fff"],
+      "circle-stroke-width": ["case", at, 3, 2],
+    } as never, // expressions are valid MapLibre style spec; the generated TS union is too strict for nested case-in-interpolate
+  };
+}
 
 function heatLayer(hour: number): LayerProps {
   return {
@@ -70,7 +78,7 @@ function heatLayer(hour: number): LayerProps {
   };
 }
 
-function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSelect, onFocus }: Props) {
+function MapViewImpl({ result, origin, destination, selectedId, focusIndex, traceOn, onSelect, onFocus, onTraceClose }: Props) {
   const mapRef = useRef<MapRef>(null);
   const [hour, setHour] = useState(0);
   const [showHeat, setShowHeat] = useState(true);
@@ -81,6 +89,17 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
   const checkpoints = useMemo(() => (selected ? checkpointsGeoJSON(selected) : null), [selected]);
   const line = useMemo(() => routeLine(selectedId), [selectedId]);
   const heatStyle = useMemo(() => heatLayer(hour), [hour]);
+  const cpStyle = useMemo(() => checkpointLayer(focusIndex), [focusIndex]);
+  const trace = useTrace(selected, traceOn, mapRef, onFocus);
+
+  // Frame the whole trip again when a trace ends.
+  const wasTracing = useRef(false);
+  useEffect(() => {
+    if (wasTracing.current && !traceOn && result) {
+      mapRef.current?.fitBounds(boundsOf(result.routes), { padding: { top: 60, bottom: 110, left: 60, right: 60 }, duration: 900 });
+    }
+    wasTracing.current = traceOn;
+  }, [traceOn, result]);
 
   // Keep the canvas sized when the sidebar is dragged.
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -107,8 +126,8 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
 
   const focused = selected && focusIndex !== null ? selected.checkpoints[focusIndex] : null;
   useEffect(() => {
-    if (focused) mapRef.current?.easeTo({ center: [focused.lng, focused.lat], duration: 500 });
-  }, [focused]);
+    if (focused && !traceOn) mapRef.current?.easeTo({ center: [focused.lng, focused.lat], duration: 500 });
+  }, [focused, traceOn]);
 
   return (
     <div className="mapwrap" ref={wrapRef}>
@@ -144,12 +163,17 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
         )}
         {checkpoints && (
           <Source id="checkpoints" type="geojson" data={checkpoints}>
-            <Layer {...checkpointLayer} />
+            <Layer {...cpStyle} />
           </Source>
+        )}
+        {trace.active && trace.truck && (
+          <Marker longitude={trace.truck[0]} latitude={trace.truck[1]} anchor="center">
+            <div className={`truck ${trace.playing ? "moving" : ""}`} aria-label="Truck position"><span>🚚</span></div>
+          </Marker>
         )}
         {result && origin && <Marker longitude={origin.lng} latitude={origin.lat}><div className="pin a"><span>A</span></div></Marker>}
         {result && destination && <Marker longitude={destination.lng} latitude={destination.lat}><div className="pin b"><span>B</span></div></Marker>}
-        {focused && (
+        {focused && !traceOn && (
           <Popup longitude={focused.lng} latitude={focused.lat} onClose={() => onFocus(null)} closeOnClick={false} offset={14} maxWidth="260px">
             <div className="popup">
               <strong>Mile {focused.mile}</strong>
@@ -167,6 +191,8 @@ function MapViewImpl({ result, origin, destination, selectedId, focusIndex, onSe
           </Popup>
         )}
       </Map>
+
+      {trace.active && selected && <TracePanel trace={trace} routeRank={selected.rank} onClose={onTraceClose} />}
 
       {!result && <div className="hint">Enter a trip to compare 3 routes by weather risk.</div>}
 

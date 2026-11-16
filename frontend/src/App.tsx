@@ -4,7 +4,8 @@ import { CheckpointTable } from "./components/CheckpointTable";
 import { MapView } from "./components/MapView";
 import { Resizer } from "./components/Resizer";
 import { RouteCards } from "./components/RouteCards";
-import { SearchForm } from "./components/SearchForm";
+import { PresetsPanel } from "./components/PresetsPanel";
+import { SearchForm, type AppliedPreset } from "./components/SearchForm";
 import type { AnalyzeRequest, AnalyzeResult, Place } from "./types";
 
 function SkeletonCards() {
@@ -47,8 +48,12 @@ export default function App() {
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [traceOn, setTraceOn] = useState(false);
+  const [applied, setApplied] = useState<AppliedPreset | null>(null);
+  const [presetsOpen, setPresetsOpen] = useState(true);
   const abort = useRef<AbortController | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const nonce = useRef(0);
 
   const run = useCallback(async (req: AnalyzeRequest) => {
     abort.current?.abort();
@@ -62,6 +67,8 @@ export default function App() {
       setPlaces({ origin: req.origin, destination: req.destination });
       setSelectedId(res.recommended_id);
       setFocusIndex(null);
+      setTraceOn(false);
+      setPresetsOpen(false);
     } catch (e) {
       if (!ctrl.signal.aborted) setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
@@ -90,7 +97,13 @@ export default function App() {
             <p>Compare 3 routes by weather risk at your arrival time, load and travel time.</p>
           </div>
         </header>
-        <SearchForm loading={loading} onSubmit={run} />
+        <SearchForm loading={loading} applied={applied} onSubmit={run} />
+        <PresetsPanel
+          disabled={loading}
+          open={presetsOpen}
+          onToggle={() => setPresetsOpen((o) => !o)}
+          onPick={(preset) => setApplied({ preset, nonce: ++nonce.current })}
+        />
         {error && <div className="banner error" role="alert">{error}</div>}
         {!result && !loading && !error && <HowItWorks />}
         {loading && !result && <SkeletonCards />}
@@ -101,7 +114,9 @@ export default function App() {
             ))}
             <div className="section-title"><h2>Routes</h2><span className="muted">{result.routes.length} options · tap to compare</span></div>
             <RouteCards result={result} selectedId={selectedId} onSelect={select} />
-            {selected && <CheckpointTable route={selected} focusIndex={focusIndex} onFocus={setFocusIndex} />}
+            {selected && (
+              <CheckpointTable route={selected} focusIndex={focusIndex} tracing={traceOn} onFocus={setFocusIndex} onToggleTrace={() => setTraceOn((t) => !t)} />
+            )}
           </div>
         )}
         <footer>
@@ -111,7 +126,7 @@ export default function App() {
       </aside>
       <Resizer />
       <main>
-        <MapView result={result} origin={places?.origin ?? null} destination={places?.destination ?? null} selectedId={selectedId} focusIndex={focusIndex} onSelect={select} onFocus={setFocusIndex} />
+        <MapView result={result} origin={places?.origin ?? null} destination={places?.destination ?? null} selectedId={selectedId} focusIndex={focusIndex} traceOn={traceOn} onSelect={select} onFocus={setFocusIndex} onTraceClose={() => setTraceOn(false)} />
       </main>
     </div>
   );

@@ -1,4 +1,4 @@
-import type { AnalyzeRequest, AnalyzeResult, Place } from "./types";
+import type { AnalyzeRequest, AnalyzeResult, Place, Preset } from "./types";
 
 /** API origin. Trailing slashes (and a stray "/api" suffix) are removed so paths never double up. */
 const BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").trim().replace(/\/+$/, "").replace(/\/api$/, "");
@@ -34,6 +34,11 @@ function firstValidationMessage(b: unknown): string | null {
 export async function geocode(q: string, signal: AbortSignal): Promise<Place[]> {
   const res = await fetch(`${BASE}/api/geocode?q=${encodeURIComponent(q)}`, { signal });
   return (await parse<{ results: Place[] }>(res)).results;
+}
+
+export async function getPresets(signal?: AbortSignal): Promise<Preset[]> {
+  const res = await fetch(`${BASE}/api/presets`, { signal });
+  return (await parse<{ presets: Preset[] }>(res)).presets;
 }
 
 export async function analyze(req: AnalyzeRequest, signal?: AbortSignal): Promise<AnalyzeResult> {

@@ -1,10 +1,16 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toLocalInputValue } from "../lib/format";
-import type { AnalyzeRequest, Place } from "../types";
+import type { AnalyzeRequest, Place, Preset } from "../types";
 import { PlaceInput } from "./PlaceInput";
+
+export interface AppliedPreset {
+  preset: Preset;
+  nonce: number;
+}
 
 interface Props {
   loading: boolean;
+  applied: AppliedPreset | null;
   onSubmit: (req: AnalyzeRequest) => void;
 }
 
@@ -31,7 +37,7 @@ function loadHint(lb: number): string {
   return "Light load: only the base wind limits apply";
 }
 
-export function SearchForm({ loading, onSubmit }: Props) {
+export function SearchForm({ loading, applied, onSubmit }: Props) {
   const [origin, setOrigin] = useState<Place | null>(null);
   const [destination, setDestination] = useState<Place | null>(null);
   const [departure, setDeparture] = useState(defaultDeparture);
@@ -52,6 +58,21 @@ export function SearchForm({ loading, onSubmit }: Props) {
     setProblem(null);
     onSubmit({ origin, destination, departure: dep.toISOString(), load_lb: loadLb, interval_mi: interval });
   };
+
+  // A clicked preset fills the form, then runs the analysis straight away.
+  useEffect(() => {
+    if (!applied) return;
+    const p = applied.preset;
+    setOrigin(p.origin);
+    setDestination(p.destination);
+    setDeparture(toLocalInputValue(new Date(p.departure)));
+    setLoad(String(p.load_lb));
+    setInterval_(p.interval_mi);
+    setProblem(null);
+    setSwapKey((k) => k + 1);
+    onSubmit({ origin: p.origin, destination: p.destination, departure: p.departure, load_lb: p.load_lb, interval_mi: p.interval_mi });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applied]);
 
   const swap = () => {
     setOrigin(destination);

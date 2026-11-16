@@ -59,6 +59,19 @@ export interface AnalyzeResult {
   routes: Route[];
 }
 
+export interface Preset {
+  id: string;
+  title: string;
+  kind: "harsh" | "calm";
+  region: string;
+  origin: Place;
+  destination: Place;
+  load_lb: number;
+  interval_mi: 10 | 25 | 50;
+  departure: string;
+  peak: { level: Level; driver: string; value: number; unit: string; at: string };
+}
+
 export interface AnalyzeRequest {
   origin: Place;
   destination: Place;

@@ -6,6 +6,7 @@ import "./form.css";
 import "./results.css";
 import "./table.css";
 import "./form2.css";
+import "./presets.css";
 import "./anim.css";
 import "./map.css";
 

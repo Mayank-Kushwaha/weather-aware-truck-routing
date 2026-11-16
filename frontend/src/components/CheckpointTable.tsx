@@ -1,20 +1,30 @@
+import { useEffect, useRef } from "react";
 import { LEVEL_COLOR, LEVEL_LABEL, driverLabel, formatShort } from "../lib/format";
 import type { Route } from "../types";
 
 interface Props {
   route: Route;
   focusIndex: number | null;
+  tracing: boolean;
   onFocus: (i: number) => void;
+  onToggleTrace: () => void;
 }
 
-export function CheckpointTable({ route, focusIndex, onFocus }: Props) {
+export function CheckpointTable({ route, focusIndex, tracing, onFocus, onToggleTrace }: Props) {
+  const wrap = useRef<HTMLDivElement>(null);
+
+  // Keep the active row visible (important while a trace is running).
+  useEffect(() => {
+    wrap.current?.querySelector("tr.focus")?.scrollIntoView({ block: "nearest" });
+  }, [focusIndex]);
+
   return (
     <section className="card checkpoints" aria-label="Checkpoints">
       <div className="cp-head">
         <h3>Route {route.rank} checkpoints</h3>
         <span className="muted">{route.checkpoints.length} stops · tap a row to locate</span>
       </div>
-      <div className="tablewrap">
+      <div className="tablewrap" ref={wrap}>
         <table>
           <thead>
             <tr>
@@ -42,7 +52,12 @@ export function CheckpointTable({ route, focusIndex, onFocus }: Props) {
           </tbody>
         </table>
       </div>
-      <p className="units muted">Wind in mph · rain and snow in in/hr</p>
+      <div className="cp-foot">
+        <p className="units muted">Wind in mph · rain and snow in in/hr</p>
+        <button type="button" className={`trace-btn ${tracing ? "on" : ""}`} onClick={onToggleTrace} disabled={route.checkpoints.length < 2}>
+          {tracing ? "■ Stop trace" : "▶ Trace route"}
+        </button>
+      </div>
     </section>
   );
 }

@@ -13,6 +13,11 @@ A React + Django app that compares three driving routes for a truck by weather r
 4. Routes are ranked by: fewest No Travel miles, fewest Severe miles, fewest High miles, lowest average risk, shortest time. The UI says why the winner won.
 5. The map shows all routes, checkpoints (colored by risk, with ETA and weather in a popup), and a weather heatmap with a 0-48 h slider.
 
+### Demo helpers
+
+- **Quick presets** (`GET /api/presets`): 16 corridors (India, Nepal, Bhutan, Bangladesh, Pakistan, USA; one end is in India for every non-US preset). The server scans the next 13 days of forecast along each corridor's straight line and picks the departure that is harshest (harsh presets) or calmest (calm presets). Clicking a preset fills the form and runs the analysis. The chip shows the real forecast peak, so a "harsh" corridor can honestly read calm in its off-season.
+- **Trace route**: the button under the checkpoint table animates a truck along the selected route with play/pause, previous/next checkpoint, jump to start/end, scrubber, 1x/2x/4x speed and a follow-camera toggle.
+
 ## Architecture
 
 ```

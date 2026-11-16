@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 
 from .serializers import AnalyzeSerializer
 from .services import analyze as analysis
-from .services import mapbox, openmeteo
+from .services import mapbox, openmeteo, presets
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +35,14 @@ class GeocodeView(APIView):
                 return _error(str(exc), status.HTTP_502_BAD_GATEWAY)
             cache.set(key, results, 600)
         return Response({"results": results})
+
+
+class PresetsView(APIView):
+    def get(self, request):
+        try:
+            return Response({"presets": presets.build()})
+        except openmeteo.WeatherUnavailable as exc:
+            return _error(str(exc), status.HTTP_502_BAD_GATEWAY)
 
 
 class AnalyzeView(APIView):
