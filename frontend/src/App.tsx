@@ -5,8 +5,12 @@ import { MapView } from "./components/MapView";
 import { Resizer } from "./components/Resizer";
 import { RouteCards } from "./components/RouteCards";
 import { PresetsPanel } from "./components/PresetsPanel";
+import { GuideModal } from "./components/GuideModal";
 import { SearchForm, type AppliedPreset } from "./components/SearchForm";
+import { WelcomeModal } from "./components/WelcomeModal";
 import type { AnalyzeRequest, AnalyzeResult, Place } from "./types";
+
+const WELCOME_KEY = "welcome-seen";
 
 function SkeletonCards() {
   return (
@@ -54,6 +58,13 @@ export default function App() {
   const abort = useRef<AbortController | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const nonce = useRef(0);
+  const [welcomeOpen, setWelcomeOpen] = useState(() => !sessionStorage.getItem(WELCOME_KEY));
+  const [guideOpen, setGuideOpen] = useState(false);
+
+  const closeWelcome = useCallback(() => {
+    sessionStorage.setItem(WELCOME_KEY, "1");
+    setWelcomeOpen(false);
+  }, []);
 
   const run = useCallback(async (req: AnalyzeRequest) => {
     abort.current?.abort();
@@ -96,6 +107,7 @@ export default function App() {
             <h1>Weather-Aware Truck Routing</h1>
             <p>Compare 3 routes by weather risk at your arrival time, load and travel time.</p>
           </div>
+          <button type="button" className="help-btn" onClick={() => setGuideOpen(true)}>? Guide</button>
         </header>
         <SearchForm loading={loading} applied={applied} onSubmit={run} />
         <PresetsPanel
@@ -124,6 +136,15 @@ export default function App() {
           Forecast model data, not a substitute for driver judgment.
         </footer>
       </aside>
+      <WelcomeModal
+        open={welcomeOpen}
+        onClose={closeWelcome}
+        onOpenGuide={() => {
+          closeWelcome();
+          setGuideOpen(true);
+        }}
+      />
+      <GuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
       <Resizer />
       <main>
         <MapView result={result} origin={places?.origin ?? null} destination={places?.destination ?? null} selectedId={selectedId} focusIndex={focusIndex} traceOn={traceOn} onSelect={select} onFocus={setFocusIndex} onTraceClose={() => setTraceOn(false)} />

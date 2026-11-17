@@ -1,7 +1,14 @@
 import type { AnalyzeRequest, AnalyzeResult, Place, Preset } from "./types";
 
 /** API origin. Trailing slashes (and a stray "/api" suffix) are removed so paths never double up. */
-const BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").trim().replace(/\/+$/, "").replace(/\/api$/, "");
+export function normalizeBase(raw: string | undefined): string {
+  return (raw ?? "").trim().replace(/\/+$/, "").replace(/\/api$/, "");
+}
+
+const BASE = normalizeBase(import.meta.env.VITE_API_URL as string | undefined);
+
+/** Health endpoint: opening it in a tab wakes the sleeping backend. */
+export const HEALTH_URL = `${BASE}/api/health`;
 
 export class ApiError extends Error {}
 
