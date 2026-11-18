@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { geocode } from "../api";
-import type { Place } from "../types";
+import { geocode } from "@/api";
+import type { Place } from "@/types";
 
 interface Props {
   label: string;
@@ -81,13 +81,20 @@ export function PlaceInput({ label, value, onChange }: Props) {
       />
       {error && <small className="err">{error}</small>}
       {open && options.length > 0 && (
-        <ul id={`${id}-list`} role="listbox" className="suggestions">
+        <div id={`${id}-list`} role="listbox" className="suggestions">
           {options.map((o) => (
-            <li key={`${o.lat},${o.lng}`} role="option" aria-selected={false} onMouseDown={() => pick(o)}>
+            <div
+              key={`${o.lat},${o.lng}`}
+              role="option"
+              tabIndex={-1}
+              aria-selected={false}
+              className="suggestion"
+              onMouseDown={() => pick(o)}
+            >
               {o.label}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
-import { LEVEL_COLOR, formatDateTime, formatDuration, formatMiles } from "../lib/format";
-import { routeColor } from "../lib/mapData";
-import type { AnalyzeResult, Level, Route } from "../types";
+import { formatDateTime, formatDuration, formatMiles, LEVEL_COLOR } from "@/lib/format";
+import { routeColor } from "@/lib/mapData";
+import type { AnalyzeResult, Level, Route } from "@/types";
 
 interface Props {
   result: AnalyzeResult;
@@ -23,7 +23,13 @@ function RiskBar({ route }: { route: Route }) {
     <div className="riskbar" role="img" aria-label="Miles by risk level">
       {SEGMENTS.map((s) => {
         const v = route.stats[s.key];
-        return v > 0 ? <span key={s.key} style={{ width: `${(v / total) * 100}%`, background: LEVEL_COLOR[s.level] }} title={`${s.label}: ${formatMiles(v)}`} /> : null;
+        return v > 0 ? (
+          <span
+            key={s.key}
+            style={{ width: `${(v / total) * 100}%`, background: LEVEL_COLOR[s.level] }}
+            title={`${s.label}: ${formatMiles(v)}`}
+          />
+        ) : null;
       })}
     </div>
   );
@@ -43,9 +49,17 @@ export function RouteCards({ result, selectedId, onSelect }: Props) {
   return (
     <section aria-label="Route options" className="routes">
       {result.routes.map((r) => (
-        <button key={r.id} className={`card route ${r.id === selectedId ? "selected" : ""}`} onClick={() => onSelect(r.id)} aria-pressed={r.id === selectedId}>
+        <button
+          type="button"
+          key={r.id}
+          className={`card route ${r.id === selectedId ? "selected" : ""}`}
+          onClick={() => onSelect(r.id)}
+          aria-pressed={r.id === selectedId}
+        >
           <div className="head">
-            <span className="rank" style={{ background: routeColor(r.rank) }}>{r.rank}</span>
+            <span className="rank" style={{ background: routeColor(r.rank) }}>
+              {r.rank}
+            </span>
             <div className="title">
               <strong>Route {r.rank}</strong>
               <span className="sub">via {r.summary}</span>
@@ -63,9 +77,15 @@ export function RouteCards({ result, selectedId, onSelect }: Props) {
           </div>
           <RiskBar route={r} />
           <div className="riskstats">
-            <span>Severe <b>{formatMiles(r.stats.severe_mi)}</b></span>
-            <span>High <b>{formatMiles(r.stats.high_mi)}</b></span>
-            <span>Avg risk <b>{r.stats.avg_risk.toFixed(2)}/4</b></span>
+            <span>
+              Severe <b>{formatMiles(r.stats.severe_mi)}</b>
+            </span>
+            <span>
+              High <b>{formatMiles(r.stats.high_mi)}</b>
+            </span>
+            <span>
+              Avg risk <b>{r.stats.avg_risk.toFixed(2)}/4</b>
+            </span>
           </div>
           {r.reason && <p className="reason">✓ {r.reason}</p>}
         </button>

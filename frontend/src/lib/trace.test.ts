@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildPath, mileAtProgress, nextIndex, pointAt, prevIndex } from "./trace";
+import { buildPath, mileAtProgress, nextIndex, pointAt, prevIndex } from "@/lib/trace";
 
 describe("trace path", () => {
-  const path = buildPath([[0, 0], [1, 0], [1, 1]]);
+  const path = buildPath([
+    [0, 0],
+    [1, 0],
+    [1, 1],
+  ]);
 
   it("starts and ends at the line ends", () => {
     expect(pointAt(path, 0)).toEqual([0, 0]);

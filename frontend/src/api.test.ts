@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeBase } from "./api";
+import { normalizeBase } from "@/api";
 
 describe("normalizeBase", () => {
   it("handles empty and undefined", () => {

@@ -1,16 +1,17 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { toLocalInputValue } from "../lib/format";
-import type { AnalyzeRequest, Place, Preset } from "../types";
-import { PlaceInput } from "./PlaceInput";
+import { type FormEvent, useEffect, useState } from "react";
+import { PlaceInput } from "@/components/form/PlaceInput";
+import { toLocalInputValue } from "@/lib/format";
+import type { AnalyzeRequest, Place } from "@/types";
 
-export interface AppliedPreset {
-  preset: Preset;
+/** A trip pushed into the form from outside (preset click, or "re-run leaving later"). The nonce makes repeats fire. */
+export interface AppliedTrip {
+  trip: AnalyzeRequest;
   nonce: number;
 }
 
 interface Props {
   loading: boolean;
-  applied: AppliedPreset | null;
+  applied: AppliedTrip | null;
   onSubmit: (req: AnalyzeRequest) => void;
 }
 
@@ -52,25 +53,27 @@ export function SearchForm({ loading, applied, onSubmit }: Props) {
     const dep = new Date(departure);
     if (!origin || !destination) return setProblem("Pick an origin and a destination from the suggestions.");
     if (Number.isNaN(dep.getTime())) return setProblem("Enter a departure date and time.");
-    if (!Number.isInteger(loadLb) || loadLb < 0 || loadLb > MAX_LOAD_LB) return setProblem(`Load must be a whole number from 0 to ${MAX_LOAD_LB.toLocaleString()} lb.`);
+    if (!Number.isInteger(loadLb) || loadLb < 0 || loadLb > MAX_LOAD_LB)
+      return setProblem(`Load must be a whole number from 0 to ${MAX_LOAD_LB.toLocaleString()} lb.`);
     if (dep.getTime() < Date.now() - 3_600_000) return setProblem("Departure cannot be in the past.");
-    if (dep.getTime() > Date.now() + MAX_DAYS * 86_400_000) return setProblem(`Departure must be within ${MAX_DAYS} days (forecast range).`);
+    if (dep.getTime() > Date.now() + MAX_DAYS * 86_400_000)
+      return setProblem(`Departure must be within ${MAX_DAYS} days (forecast range).`);
     setProblem(null);
     onSubmit({ origin, destination, departure: dep.toISOString(), load_lb: loadLb, interval_mi: interval });
   };
 
-  // A clicked preset fills the form, then runs the analysis straight away.
+  // An applied trip fills the form, then runs straight away.
   useEffect(() => {
     if (!applied) return;
-    const p = applied.preset;
-    setOrigin(p.origin);
-    setDestination(p.destination);
-    setDeparture(toLocalInputValue(new Date(p.departure)));
-    setLoad(String(p.load_lb));
-    setInterval_(p.interval_mi);
+    const t = applied.trip;
+    setOrigin(t.origin);
+    setDestination(t.destination);
+    setDeparture(toLocalInputValue(new Date(t.departure)));
+    setLoad(String(t.load_lb));
+    setInterval_(t.interval_mi);
     setProblem(null);
     setSwapKey((k) => k + 1);
-    onSubmit({ origin: p.origin, destination: p.destination, departure: p.departure, load_lb: p.load_lb, interval_mi: p.interval_mi });
+    onSubmit(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applied]);
 
@@ -80,7 +83,7 @@ export function SearchForm({ loading, applied, onSubmit }: Props) {
     setSwapKey((k) => k + 1);
   };
 
-  const useExample = () => {
+  const fillExample = () => {
     setOrigin(EXAMPLE.origin);
     setDestination(EXAMPLE.destination);
     setProblem(null);
@@ -90,11 +93,15 @@ export function SearchForm({ loading, applied, onSubmit }: Props) {
     <form className="card form" onSubmit={submit} noValidate>
       <div className="places">
         <PlaceInput key={`o${swapKey}`} label="Origin" value={origin} onChange={setOrigin} />
-        <button type="button" className="swap" onClick={swap} aria-label="Swap origin and destination" title="Swap">⇅</button>
+        <button type="button" className="swap" onClick={swap} aria-label="Swap origin and destination" title="Swap">
+          ⇅
+        </button>
         <PlaceInput key={`d${swapKey}`} label="Destination" value={destination} onChange={setDestination} />
       </div>
       {!origin && !destination && (
-        <button type="button" className="chip" onClick={useExample}>✨ Try an example: Chicago → Denver</button>
+        <button type="button" className="chip" onClick={fillExample}>
+          ✨ Try an example: Chicago → Denver
+        </button>
       )}
       <div className="row">
         <div className="field">
@@ -103,7 +110,16 @@ export function SearchForm({ loading, applied, onSubmit }: Props) {
         </div>
         <div className="field">
           <label htmlFor="load">Load (lb)</label>
-          <input id="load" type="number" inputMode="numeric" min={0} max={MAX_LOAD_LB} step={500} value={load} onChange={(e) => setLoad(e.target.value)} />
+          <input
+            id="load"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={MAX_LOAD_LB}
+            step={500}
+            value={load}
+            onChange={(e) => setLoad(e.target.value)}
+          />
         </div>
       </div>
       <p className="hint-text">{loadHint(Number(load))}</p>
@@ -118,7 +134,11 @@ export function SearchForm({ loading, applied, onSubmit }: Props) {
           ))}
         </div>
       </fieldset>
-      {problem && <p className="err" role="alert">{problem}</p>}
+      {problem && (
+        <p className="err" role="alert">
+          {problem}
+        </p>
+      )}
       <button type="submit" disabled={loading}>
         {loading && <span className="spinner" aria-hidden="true" />}
         {loading ? "Analyzing routes…" : "Find safest route"}

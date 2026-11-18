@@ -62,14 +62,19 @@ def _bucket(value: float, tol: float) -> float:
     return round(value / tol) if tol > 0 else value
 
 
-def sort_key(stats: RouteStats, duration_s: float) -> tuple:
+def risk_key(stats: RouteStats) -> tuple:
+    """Weather part of the ranking: No Travel, Severe, High miles, then average risk (tolerance buckets)."""
     return (
         _bucket(stats.no_travel_mi, MILES_TOLERANCE),
         _bucket(stats.severe_mi, MILES_TOLERANCE),
         _bucket(stats.high_mi, MILES_TOLERANCE),
         _bucket(stats.avg_risk, AVG_RISK_TOLERANCE),
-        duration_s,
     )
+
+
+def sort_key(stats: RouteStats, duration_s: float) -> tuple:
+    """Full ranking key. Lower is better; travel time is the last tie-break."""
+    return (*risk_key(stats), duration_s)
 
 
 def rank_routes(items: list[tuple[str, RouteStats, float]]) -> list[str]:

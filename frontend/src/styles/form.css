@@ -23,5 +23,5 @@ form > button:disabled { opacity: 0.8; cursor: progress; }
 .err { color: var(--bad); font-size: 0.82rem; margin: 0; }
 
 .suggestions { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; margin: 4px 0 0; padding: 4px; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 28px rgba(15, 27, 45, 0.16); max-height: 240px; overflow: auto; }
-.suggestions li { padding: 8px 10px; cursor: pointer; font-size: 0.86rem; border-radius: 8px; }
-.suggestions li:hover { background: #eff4ff; color: var(--brand); }
+.suggestion { padding: 8px 10px; cursor: pointer; font-size: 0.86rem; border-radius: 8px; }
+.suggestion:hover { background: #eff4ff; color: var(--brand); }

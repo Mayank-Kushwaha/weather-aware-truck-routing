@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MapRef } from "react-map-gl/maplibre";
-import { buildPath, mileAtProgress, nextIndex, pointAt, prevIndex, type LngLat } from "../lib/trace";
-import type { Route } from "../types";
+import { buildPath, type LngLat, mileAtProgress, nextIndex, pointAt, prevIndex } from "@/lib/trace";
+import type { Route } from "@/types";
 
 const STEP_MS = 1600; // time to travel between two checkpoints at 1x
 export const SPEEDS = [1, 2, 4] as const;

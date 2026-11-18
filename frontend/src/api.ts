@@ -1,8 +1,11 @@
-import type { AnalyzeRequest, AnalyzeResult, Place, Preset } from "./types";
+import type { AnalyzeRequest, AnalyzeResult, Place, Preset } from "@/types";
 
 /** API origin. Trailing slashes (and a stray "/api" suffix) are removed so paths never double up. */
 export function normalizeBase(raw: string | undefined): string {
-  return (raw ?? "").trim().replace(/\/+$/, "").replace(/\/api$/, "");
+  return (raw ?? "")
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/api$/, "");
 }
 
 const BASE = normalizeBase(import.meta.env.VITE_API_URL as string | undefined);

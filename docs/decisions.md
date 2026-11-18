@@ -111,6 +111,19 @@ backend/  frontend/  docs/  scripts/  input/  README.md  .env.example
 - Monorepo, one GitHub repo. `input/` contains the email and the assessment PDF; it will be git-ignored unless the user wants it published.
 - Pushing needs the user's GitHub remote and auth. A script in `scripts/` will do commit and push once the remote URL is given.
 
+## C2. Later decisions (evaluation pass)
+
+| Ref | Decision | Why and evidence |
+|---|---|---|
+| D18 | **Decision funnel** (`domain/decision.py`): apply the ranking criteria in order and record who is eliminated at each step; shown in the UI. | The assessment weights recommendation logic at 40%. A ranked list alone does not show the logic; the funnel makes the choice auditable. Tolerance buckets are reused so funnel and ranking cannot disagree (tested). |
+| D19 | **Departure advisor** (`domain/advisor.py`): re-rank all routes for delays of 1 to 12 h from the same forecast; report the earliest materially safer window and whether the winner survives a 1 or 2 h late start. | A dispatcher's next question after "which route" is "when". It reuses the loaded forecast, so it adds no API calls (about 0.1 s compute). Windows whose forecast runs out are ignored so a gap can never look like safety. A "flip" only counts when the original winner is worse on weather, not a time tie-break. |
+| D20 | **Overlap weather download with detour search** (`analyze._Prefetch`) and **stage the detour search** (2 calls, then 4 only if needed). | Measured cold analysis 4.2 s to 2.2 s (25 mi). Routing was 3.7 s of 4.2 s. |
+| D21 | **Heatmap slider bypasses React**: `HeatSlider` owns only its label state; the map gets one `setPaintProperty` per animation frame. | Median 18 ms per frame while dragging on a real GPU, equal to idle; 0 network requests. |
+| D22 | **Resource hints and code splitting**: `preconnect` (tiles, API), `preload` (style, tile index) injected at build from `VITE_API_URL`; map and guide lazy-loaded and the map chunk requested at boot; backend pinged at boot. | App shell 79 KB gzip; the 310 KB map chunk loads in parallel instead of after it. |
+| D23 | **Structure:** feature folders and `@/` imports on the frontend; `services/payload.py` and `services/http.py` on the backend; Biome (lint+format) and ruff; strict TypeScript. | Industry-standard layering; every gate is green: 91 backend tests, 12 frontend tests, ruff, Biome, `tsc`, production build. |
+| D24 | **Presets are computed from the live forecast** (`services/presets.py`), not hard-coded dates. | Hard-coded departures go stale in days. The chip shows the real forecast peak, so an off-season "harsh" corridor honestly reads calm. |
+| D25 | **Welcome modal wakes the Render backend** and shows status; guide modal documents every feature. | Free-tier cold start blocks city search and presets for up to a minute. |
+
 ## C. Amendments made during the build (these override the text above)
 
 | Ref | Change | Evidence |

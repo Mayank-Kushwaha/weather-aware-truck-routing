@@ -17,15 +17,16 @@ from django.core.cache import cache
 
 from ..domain.geometry import Coord
 from ..domain.weather import WeatherSeries
+from . import http
 
 log = logging.getLogger(__name__)
 
 URL = "https://api.open-meteo.com/v1/forecast"
-BATCH = 100
+BATCH = 50
 TIMEOUT_S = 15
 CACHE_TTL_S = 30 * 60
 GRID_DEG = 0.1
-WORKERS = 4
+WORKERS = 8
 
 Cell = tuple[float, float]  # (lat, lng) rounded to the grid
 
@@ -68,7 +69,7 @@ def _request(cells: list[Cell], start: date, end: date) -> list[dict]:
     last: Exception | None = None
     for attempt in range(2):
         try:
-            r = requests.get(URL, params=params, timeout=TIMEOUT_S)
+            r = http.get(URL, params=params, timeout=TIMEOUT_S)
             if r.status_code == 429 or r.status_code >= 500:
                 last = WeatherUnavailable(f"Weather service returned {r.status_code}")
                 time.sleep(0.8 * (attempt + 1))

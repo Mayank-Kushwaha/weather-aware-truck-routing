@@ -7,6 +7,7 @@ so a third route is built from a detour through an offset via-point.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
@@ -22,6 +23,7 @@ from ..domain.geometry import (
     destination_point,
     overlap_ratio,
 )
+from . import http
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +35,7 @@ ROUTE_CACHE_TTL_S = 10 * 60
 # Detour acceptance (decisions.md D1): distinct enough, and not absurdly longer than the fastest.
 MAX_OVERLAP = 0.75
 MAX_DETOUR_FACTOR = 1.6
-DETOUR_FRACTIONS = (0.5, 0.35, 0.65)
+DETOUR_STAGES = ((0.5,), (0.35, 0.65))  # via-point positions along the route, tried in order
 DETOUR_OFFSET_FRACTION = 0.12  # of route length
 DETOUR_OFFSET_MIN_M, DETOUR_OFFSET_MAX_M = 20_000.0, 120_000.0
 
@@ -57,7 +59,7 @@ class RouteOption:
 
 def _get(url: str, params: dict) -> dict:
     try:
-        r = requests.get(url, params={**params, "access_token": settings.MAPBOX_TOKEN}, timeout=TIMEOUT_S)
+        r = http.get(url, params={**params, "access_token": settings.MAPBOX_TOKEN}, timeout=TIMEOUT_S)
     except requests.RequestException as exc:
         raise UpstreamError("Routing service is unreachable") from exc
     if r.status_code == 401 or r.status_code == 403:
@@ -122,11 +124,11 @@ def _directions(points: list[Coord], alternatives: bool) -> list[dict]:
     return data["routes"]
 
 
-def _via_candidates(base: RouteOption, origin: Coord, dest: Coord) -> list[list[Coord]]:
+def _via_candidates(base: RouteOption, origin: Coord, dest: Coord, fractions: tuple[float, ...]) -> list[list[Coord]]:
     line = base.line
     offset = min(max(line.total_m * DETOUR_OFFSET_FRACTION, DETOUR_OFFSET_MIN_M), DETOUR_OFFSET_MAX_M)
     cands = []
-    for frac in DETOUR_FRACTIONS:
+    for frac in fractions:
         mid, _ = line.locate(line.total_m * frac)
         brg = bearing_deg(origin, dest)
         for side in (90, -90):
@@ -135,44 +137,71 @@ def _via_candidates(base: RouteOption, origin: Coord, dest: Coord) -> list[list[
     return cands
 
 
-def get_route_options(origin: Coord, dest: Coord, want: int = 3) -> list[RouteOption]:
+PrimaryCallback = Callable[[list[RouteOption]], None]
+
+
+def get_route_options(
+    origin: Coord, dest: Coord, want: int = 3, on_primary: PrimaryCallback | None = None
+) -> list[RouteOption]:
     """Cached wrapper (10 min): the road network changes slowly and each search costs up to 7 calls."""
     key = f"route:{origin[0]:.4f},{origin[1]:.4f}:{dest[0]:.4f},{dest[1]:.4f}:{want}"
     hit = cache.get(key)
-    if hit is None:
-        hit = _compute_route_options(origin, dest, want)
-        cache.set(key, hit, ROUTE_CACHE_TTL_S)
+    if hit is not None:
+        if on_primary:
+            on_primary(list(hit))
+        return hit
+    hit = _compute_route_options(origin, dest, want, on_primary)
+    cache.set(key, hit, ROUTE_CACHE_TTL_S)
     return hit
 
 
-def _compute_route_options(origin: Coord, dest: Coord, want: int) -> list[RouteOption]:
-    """Up to ``want`` distinct routes, fastest first. Fewer are returned if none exist."""
+def _compute_route_options(
+    origin: Coord, dest: Coord, want: int, on_primary: PrimaryCallback | None
+) -> list[RouteOption]:
+    """Up to ``want`` distinct routes, fastest first. Fewer are returned if none exist.
+
+    ``on_primary`` fires as soon as the first Directions response is parsed, so the caller can start
+    work (the weather fetch) while the slower detour search below is still running.
+    """
     options = [_parse_route(r) for r in _directions([origin, dest], alternatives=True)]
     options.sort(key=lambda o: o.duration_s)
+    if on_primary:
+        on_primary(list(options))
     if len(options) >= want:
         return options[:want]
 
     fastest = options[0]
-    cands = _via_candidates(fastest, origin, dest)
-
-    def attempt(points: list[Coord]) -> RouteOption | None:
-        try:
-            routes = _directions(points, alternatives=False)
-        except (UpstreamError, NoRouteError) as exc:
-            log.info("detour attempt failed: %s", exc)
-            return None
-        return _parse_route(routes[0], is_detour=True)
-
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        found = [r for r in pool.map(attempt, cands) if r is not None]
-
-    found.sort(key=lambda o: o.duration_s)
-    for cand in found:
+    # Staged search: the middle of the route (two sides, two calls) usually succeeds, so the
+    # extra positions are only tried when it does not. This halves the typical latency.
+    for fractions in DETOUR_STAGES:
+        cands = _via_candidates(fastest, origin, dest, fractions)
+        with ThreadPoolExecutor(max_workers=len(cands)) as pool:
+            found = [r for r in pool.map(_detour_attempt, cands) if r is not None]
+        _accept_distinct(options, found, fastest, want)
         if len(options) >= want:
             break
-        if cand.duration_s > fastest.duration_s * MAX_DETOUR_FACTOR:
-            continue
-        if cand.distance_m > fastest.distance_m * MAX_DETOUR_FACTOR:
+    options.sort(key=lambda o: o.duration_s)
+    return options
+
+
+def _detour_attempt(points: list[Coord]) -> RouteOption | None:
+    try:
+        routes = _directions(points, alternatives=False)
+    except (UpstreamError, NoRouteError) as exc:
+        log.info("detour attempt failed: %s", exc)
+        return None
+    return _parse_route(routes[0], is_detour=True)
+
+
+def _accept_distinct(options: list[RouteOption], found: list[RouteOption], fastest: RouteOption, want: int) -> None:
+    """Add detours (fastest first) that are plausible and share under MAX_OVERLAP of their path with every kept route."""
+    for cand in sorted(found, key=lambda o: o.duration_s):
+        if len(options) >= want:
+            return
+        if (
+            cand.duration_s > fastest.duration_s * MAX_DETOUR_FACTOR
+            or cand.distance_m > fastest.distance_m * MAX_DETOUR_FACTOR
+        ):
             continue
         if all(
             overlap_ratio(cand.line.coords, o.line.coords) < MAX_OVERLAP
@@ -180,5 +209,3 @@ def _compute_route_options(origin: Coord, dest: Coord, want: int) -> list[RouteO
             for o in options
         ):
             options.append(cand)
-    options.sort(key=lambda o: o.duration_s)
-    return options

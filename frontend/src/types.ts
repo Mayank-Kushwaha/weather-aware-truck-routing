@@ -49,7 +49,49 @@ export interface Route {
   checkpoints: Checkpoint[];
 }
 
+export type Criterion = "no_travel" | "severe" | "high" | "avg_risk" | "time";
+
+/** One step of the lexicographic ranking: who was best on this criterion and who was eliminated. */
+export interface LadderStep {
+  criterion: Criterion;
+  label: string;
+  unit: string;
+  values: Record<string, number>;
+  survivors: string[];
+  eliminated: string[];
+  decisive: boolean;
+}
+
+export interface BriefStats {
+  no_travel_mi: number;
+  severe_mi: number;
+  high_mi: number;
+  avg_risk: number;
+}
+
+/** Departure advisor: is a later start materially safer, and does the winner survive a late start? */
+export interface Advisor {
+  status: "keep" | "delay" | "unknown";
+  stable: boolean;
+  flip: { delay_h: number; route_id: string } | null;
+  headline?: string;
+  delay_h?: number;
+  route_id?: string;
+  before?: BriefStats;
+  after?: BriefStats;
+}
+
+export interface Timings {
+  routing: number;
+  weather: number;
+  compute: number;
+  total: number;
+}
+
 export interface AnalyzeResult {
+  decision: { ladder: LadderStep[] };
+  advisor: Advisor;
+  timings_ms: Timings;
   recommended_id: string;
   departure: string;
   interval_mi: number;

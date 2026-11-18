@@ -13,6 +13,13 @@ A React + Django app that compares three driving routes for a truck by weather r
 4. Routes are ranked by: fewest No Travel miles, fewest Severe miles, fewest High miles, lowest average risk, shortest time. The UI says why the winner won.
 5. The map shows all routes, checkpoints (colored by risk, with ETA and weather in a popup), and a weather heatmap with a 0-48 h slider.
 
+### Recommendation logic
+
+1. **Miles, not points.** Each checkpoint owns the road from the midpoint before it to the midpoint after it, so weather becomes miles per level.
+2. **Order:** No Travel miles (added: worse than Severe), Severe miles, High miles, average risk, travel time. Differences under 1 mi (0.05 avg risk) are ties, so time decides when weather is equal.
+3. **Decision funnel** (`domain/decision.py`): the criteria are applied one by one and the response records who is eliminated at each step. The UI shows it as "How the winner was chosen", so the choice is auditable.
+4. **Departure advisor** (`domain/advisor.py`): re-ranks all routes for each departure delay from 1 to 12 h using the same forecast (no extra API calls) and reports the earliest materially safer window. It also checks stability: whether the winner still wins if you leave 1 or 2 h late. A one-click button re-runs the trip at the better time.
+
 ### Demo helpers
 
 - **Quick presets** (`GET /api/presets`): 16 corridors (India, Nepal, Bhutan, Bangladesh, Pakistan, USA; one end is in India for every non-US preset). The server scans the next 13 days of forecast along each corridor's straight line and picks the departure that is harshest (harsh presets) or calmest (calm presets). Clicking a preset fills the form and runs the analysis. The chip shows the real forecast peak, so a "harsh" corridor can honestly read calm in its off-season.
@@ -66,11 +73,25 @@ npm install
 npm run dev                                           # http://localhost:5173, proxies /api to :8000
 ```
 
-Tests and checks:
+Tests and checks (all green at the last commit: 91 backend tests, 12 frontend tests):
 
 ```bash
 cd backend  && python -m pytest && ruff check .
-cd frontend && npm test && npm run build              # build runs tsc in strict mode
+cd frontend && npm test && npm run check && npm run build   # Biome lint+format, then strict tsc + production build
+```
+
+## Project structure
+
+```
+backend/trucking/
+  domain/     pure logic, no I/O: risk, geometry, weather (interpolation), recommend, decision (funnel), advisor
+  services/   mapbox, openmeteo, presets, analyze (orchestrator), payload (serialisation), http (pooled session)
+  tests/      table-driven boundary tests, mocked upstreams
+frontend/src/
+  components/ form/ results/ map/ modals/ layout/      feature folders
+  hooks/      useAnalysis, useTrace, useBackendStatus
+  lib/        pure helpers (format, mapData, trace) with tests
+  styles/     base, form, results, map, modal, animations (imported from styles/index.css)
 ```
 
 ## Deploy
@@ -87,11 +108,25 @@ cd frontend && npm test && npm run build              # build runs tsc in strict
 
 Errors are JSON `{error: "..."}`: 400/422 for bad input or no route, 502 when Mapbox or Open-Meteo fail.
 
-## Measured
+## Performance
 
-- Chicago to Denver (about 1,000 mi), 10 mi interval, about 320 checkpoints, cold cache: about 6 s. Repeat search with warm caches: about 0.3 s.
-- Response about 100 KB at 25 mi and 166 KB at 10 mi (route geometry is simplified, gzip is on).
-- Dragging the slider: 0 network requests (checked with a Playwright run against the built app).
+Measured on the built app (Playwright + Chrome), Chicago to Denver, about 1,000 mi:
+
+| What | Result |
+|---|---|
+| Cold analysis, 25 mi (about 130 checkpoints) | 2.2 s total (3 runs: 2.15 to 2.4 s): routing 1.5 s, weather 0.55 s, compute 0.1 s. Was 4.2 s before the staged detour search |
+| Cold analysis, 10 mi (about 320 checkpoints) | 2.7 to 3.0 s total |
+| Repeat search (caches warm) | 0.1 to 0.2 s |
+| Response size | about 100 KB at 25 mi, 167 KB at 10 mi |
+| Heatmap slider | 0 network requests. Median frame 18 ms while dragging on a real GPU, equal to an idle page (software rendering is about 117 ms, which is a CPU rasterizer, not the app) |
+| First JS | 79 KB gzip app shell; the 310 KB gzip map chunk loads in parallel, not after |
+
+What makes it fast:
+
+- **Overlap:** the weather download starts as soon as the first Directions response arrives, while the slower detour search is still running. Both share one forecast window so the later fetch only needs the cells a detour adds.
+- **Detour search is staged:** two calls first (middle of the route, both sides); more positions only if those fail.
+- **Network:** pooled keep-alive session, parallel weather batches of 50, 0.1 degree grid de-duplication, 30 minute cache, 10 minute route cache.
+- **Client:** map and guide are code-split. `index.html` carries `preconnect` (tile host, API host) and `preload` (map style, tile index). The map chunk is requested at boot, the backend is pinged at boot to wake it, and the slider drives one MapLibre paint expression per frame, outside React.
 
 ## Limits
 

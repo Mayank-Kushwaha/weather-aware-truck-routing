@@ -77,7 +77,7 @@ def test_validation_errors_are_400(client, over):
 
 def test_analyze_ranks_calmer_route_first_and_applies_load_rule(client, monkeypatch):
     opts = [make_option(0.0, 100, 2.0), make_option(0.3, 110, 2.2, detour=True)]
-    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3: opts)
+    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3, **kw: opts)
     # 40 mph wind on the first route's latitude only; 45,000 lb load -> Severe via load rule
     monkeypatch.setattr(openmeteo, "fetch_series", fake_series(lambda c: 40.0 if c[0] < 40.2 else 5.0))
 
@@ -95,14 +95,14 @@ def test_analyze_ranks_calmer_route_first_and_applies_load_rule(client, monkeypa
 
 
 def test_lighter_load_changes_level_per_rules(client, monkeypatch):
-    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3: [make_option()])
+    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3, **kw: [make_option()])
     monkeypatch.setattr(openmeteo, "fetch_series", fake_series(40.0))
     r = client.post("/api/analyze", payload(load_lb=30000), format="json").json()
     assert r["routes"][0]["checkpoints"][0]["level"] == "high"
 
 
 def test_etas_increase_along_the_route(client, monkeypatch):
-    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3: [make_option(miles=100, hours=2)])
+    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3, **kw: [make_option(miles=100, hours=2)])
     monkeypatch.setattr(openmeteo, "fetch_series", fake_series(5.0))
     cps = client.post("/api/analyze", payload(), format="json").json()["routes"][0]["checkpoints"]
     assert [c["mile"] for c in cps] == [0, 25, 50, 75, 100]
@@ -112,7 +112,7 @@ def test_etas_increase_along_the_route(client, monkeypatch):
 
 
 def test_too_many_checkpoints_is_400(client, monkeypatch):
-    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3: [make_option(miles=3000, hours=50)] * 3)
+    monkeypatch.setattr(mapbox, "get_route_options", lambda o, d, want=3, **kw: [make_option(miles=3000, hours=50)] * 3)
     r = client.post("/api/analyze", payload(interval_mi=10), format="json")
     assert r.status_code == 400 and "larger interval" in r.json()["error"]
 

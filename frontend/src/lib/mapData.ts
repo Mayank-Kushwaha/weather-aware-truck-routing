@@ -1,6 +1,6 @@
 import type { Feature, FeatureCollection, LineString, Point } from "geojson";
-import type { AnalyzeResult, Route } from "../types";
-import { LEVEL_COLOR } from "./format";
+import { LEVEL_COLOR } from "@/lib/format";
+import type { AnalyzeResult, Route } from "@/types";
 
 const ROUTE_COLORS = ["#1d4ed8", "#7c3aed", "#0f766e"];
 
@@ -63,7 +63,10 @@ export function heatWeightExpression(hour: number) {
 }
 
 export function boundsOf(routes: Route[]): [[number, number], [number, number]] {
-  let minX = 180, minY = 90, maxX = -180, maxY = -90;
+  let minX = 180,
+    minY = 90,
+    maxX = -180,
+    maxY = -90;
   for (const r of routes) {
     for (const [x, y] of r.geometry.coordinates) {
       if (x < minX) minX = x;
@@ -72,5 +75,8 @@ export function boundsOf(routes: Route[]): [[number, number], [number, number]] 
       if (y > maxY) maxY = y;
     }
   }
-  return [[minX, minY], [maxX, maxY]];
+  return [
+    [minX, minY],
+    [maxX, maxY],
+  ];
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { LEVEL_COLOR, LEVEL_LABEL, driverLabel, formatShort } from "../lib/format";
-import type { Route } from "../types";
+import { driverLabel, formatShort, LEVEL_COLOR, LEVEL_LABEL } from "@/lib/format";
+import type { Route } from "@/types";
 
 interface Props {
   route: Route;
@@ -38,11 +38,19 @@ export function CheckpointTable({ route, focusIndex, tracing, onFocus, onToggleT
           </thead>
           <tbody>
             {route.checkpoints.map((c, i) => (
-              <tr key={c.mile} className={i === focusIndex ? "focus" : ""} onClick={() => onFocus(i)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onFocus(i)}>
+              <tr
+                key={c.mile}
+                className={i === focusIndex ? "focus" : ""}
+                onClick={() => onFocus(i)}
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && onFocus(i)}
+              >
                 <td className="num">{c.mile}</td>
                 <td>{formatShort(c.eta)}</td>
                 <td>
-                  <span className="pill" style={{ background: LEVEL_COLOR[c.level] }} title={driverLabel(c.driver)}>{LEVEL_LABEL[c.level]}</span>
+                  <span className="pill" style={{ background: LEVEL_COLOR[c.level] }} title={driverLabel(c.driver)}>
+                    {LEVEL_LABEL[c.level]}
+                  </span>
                 </td>
                 <td className="num">{c.weather ? Math.round(c.weather.wind_mph) : "–"}</td>
                 <td className="num">{c.weather ? c.weather.rain_in_hr.toFixed(2) : "–"}</td>
@@ -54,7 +62,12 @@ export function CheckpointTable({ route, focusIndex, tracing, onFocus, onToggleT
       </div>
       <div className="cp-foot">
         <p className="units muted">Wind in mph · rain and snow in in/hr</p>
-        <button type="button" className={`trace-btn ${tracing ? "on" : ""}`} onClick={onToggleTrace} disabled={route.checkpoints.length < 2}>
+        <button
+          type="button"
+          className={`trace-btn ${tracing ? "on" : ""}`}
+          onClick={onToggleTrace}
+          disabled={route.checkpoints.length < 2}
+        >
           {tracing ? "■ Stop trace" : "▶ Trace route"}
         </button>
       </div>

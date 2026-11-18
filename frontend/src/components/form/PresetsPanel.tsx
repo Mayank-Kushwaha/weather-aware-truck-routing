@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { getPresets } from "../api";
-import { LEVEL_COLOR, formatShort } from "../lib/format";
-import type { Preset } from "../types";
+import { getPresets } from "@/api";
+import { formatShort, LEVEL_COLOR } from "@/lib/format";
+import type { Preset } from "@/types";
 
 interface Props {
   disabled: boolean;
@@ -43,21 +43,41 @@ export function PresetsPanel({ disabled, open, onToggle, onPick }: Props) {
           <strong>Quick presets</strong>
           <small className="muted"> · live forecast picks the departure</small>
         </span>
-        <span className={`chev ${open ? "open" : ""}`} aria-hidden="true">▾</span>
+        <span className={`chev ${open ? "open" : ""}`} aria-hidden="true">
+          ▾
+        </span>
       </button>
       {open && (
         <div className="presets-body">
           <div className="tabs" role="tablist">
             {(["all", "harsh", "calm"] as const).map((f) => (
-              <button key={f} type="button" role="tab" aria-selected={filter === f} className={filter === f ? "on" : ""} onClick={() => setFilter(f)}>
+              <button
+                key={f}
+                type="button"
+                role="tab"
+                aria-selected={filter === f}
+                className={filter === f ? "on" : ""}
+                onClick={() => setFilter(f)}
+              >
                 {f === "all" ? "All" : f === "harsh" ? "Harsh" : "Calm"}
               </button>
             ))}
           </div>
           {error && (
-            <p className="err">{error} <button type="button" className="linkbtn" onClick={() => setAttempt((a) => a + 1)}>Retry</button></p>
+            <p className="err">
+              {error}{" "}
+              <button type="button" className="linkbtn" onClick={() => setAttempt((a) => a + 1)}>
+                Retry
+              </button>
+            </p>
           )}
-          {!items && !error && <div className="preset-skel">{[0, 1, 2].map((i) => <div key={i} className="skel-line thin" style={{ ["--i" as string]: i }} />)}</div>}
+          {!items && !error && (
+            <div className="preset-skel">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="skel-line thin" style={{ ["--i" as string]: i }} />
+              ))}
+            </div>
+          )}
           <ul className="preset-list">
             {shown.map((p, i) => (
               <li key={p.id} style={{ ["--i" as string]: i }}>
@@ -70,7 +90,9 @@ export function PresetsPanel({ disabled, open, onToggle, onPick }: Props) {
                     <span className="peak" style={{ ["--c" as string]: LEVEL_COLOR[p.peak.level] }}>
                       <i /> {peakText(p)}
                     </span>
-                    <span>{p.load_lb.toLocaleString()} lb · departs {formatShort(p.departure)}</span>
+                    <span>
+                      {p.load_lb.toLocaleString()} lb · departs {formatShort(p.departure)}
+                    </span>
                   </span>
                 </button>
               </li>

@@ -1,6 +1,6 @@
-import { HEALTH_URL } from "../api";
-import { useBackendStatus } from "../hooks/useBackendStatus";
-import { Modal } from "./Modal";
+import { HEALTH_URL } from "@/api";
+import { Modal } from "@/components/modals/Modal";
+import { useBackendStatus } from "@/hooks/useBackendStatus";
 
 interface Props {
   open: boolean;
@@ -23,8 +23,12 @@ export function WelcomeModal({ open, onClose, onOpenGuide }: Props) {
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn ghost" onClick={onOpenGuide}>Read the full guide</button>
-          <button type="button" className="btn primary" onClick={onClose}>Start exploring</button>
+          <button type="button" className="btn ghost" onClick={onOpenGuide}>
+            Read the full guide
+          </button>
+          <button type="button" className="btn primary" onClick={onClose}>
+            Start exploring
+          </button>
         </>
       }
     >
@@ -49,19 +53,30 @@ export function WelcomeModal({ open, onClose, onOpenGuide }: Props) {
       <ul className="tour">
         <li>
           <span className="ico">🛣️</span>
-          <div><strong>Compare 3 routes.</strong> Enter origin, destination, departure time and load. The app checks the weather at each checkpoint at the time your truck gets there and recommends the safest route.</div>
+          <div>
+            <strong>Compare 3 routes.</strong> Enter origin, destination, departure time and load. The app checks the weather at each
+            checkpoint at the time your truck gets there and recommends the safest route.
+          </div>
         </li>
         <li>
           <span className="ico">⚡</span>
-          <div><strong>Presets under the form.</strong> Pick a harsh or calm corridor (India, neighbouring countries, USA). The departure is chosen from the live forecast and the analysis runs for you.</div>
+          <div>
+            <strong>Presets under the form.</strong> Pick a harsh or calm corridor (India, neighbouring countries, USA). The departure is
+            chosen from the live forecast and the analysis runs for you.
+          </div>
         </li>
         <li>
           <span className="ico">✨</span>
-          <div><strong>One-click example.</strong> The "Try an example" button fills Chicago → Denver so you can see results straight away.</div>
+          <div>
+            <strong>One-click example.</strong> The "Try an example" button fills Chicago → Denver so you can see results straight away.
+          </div>
         </li>
         <li>
           <span className="ico">🚚</span>
-          <div><strong>Follow the route.</strong> After a search, press "Trace route" under the checkpoint table to watch a truck drive the route with play, pause and step controls.</div>
+          <div>
+            <strong>Follow the route.</strong> After a search, press "Trace route" under the checkpoint table to watch a truck drive the
+            route with play, pause and step controls.
+          </div>
         </li>
       </ul>
     </Modal>

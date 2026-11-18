@@ -1,0 +1,38 @@
+/* Departure advisor */
+.advisor { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; border-left: 5px solid var(--good); }
+.advisor.better { border-left-color: #f59e0b; background: linear-gradient(180deg, #fffdf6, #fff); }
+.advisor-head { display: flex; align-items: center; gap: 10px; }
+.advisor-ico { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: #dcfce7; font-size: 1rem; flex: none; }
+.advisor.better .advisor-ico { background: #fef3c7; }
+.advisor-text { margin: 0; font-size: 0.84rem; color: #334155; }
+.deltas { display: flex; flex-wrap: wrap; gap: 6px; }
+.delta { background: #f1f5f9; border-radius: 99px; padding: 3px 10px; font-size: 0.76rem; }
+.delta s { color: var(--muted); }
+.delta b { color: var(--good); }
+.stability { margin: 0; font-size: 0.78rem; font-weight: 600; }
+.stability.ok { color: var(--good); }
+.stability.warn { color: #b45309; }
+.btn.small { padding: 8px 14px; font-size: 0.82rem; align-self: flex-start; }
+
+/* Decision funnel */
+.funnel { margin-bottom: 12px; padding: 0; }
+.funnel summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; font-size: 0.9rem; }
+.funnel summary::-webkit-details-marker { display: none; }
+.funnel[open] .chev { transform: rotate(180deg); }
+.steps { list-style: none; margin: 0; padding: 0 14px 6px; display: flex; flex-direction: column; gap: 10px; }
+.steps li { padding-left: 12px; border-left: 3px solid var(--line); }
+.steps li.decisive { border-left-color: var(--brand); }
+.step-head { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; margin-bottom: 4px; }
+.step-no { width: 20px; height: 20px; border-radius: 6px; background: #eef2f7; display: grid; place-items: center; font-size: 0.7rem; font-weight: 800; }
+.tag.decides { background: #dbeafe; color: var(--brand); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 99px; font-size: 0.74rem; border: 1px solid var(--line); background: #fff; }
+.vchip i { width: 8px; height: 8px; border-radius: 50%; }
+.vchip.in { border-color: #86efac; background: #f0fdf4; }
+.vchip.out { opacity: 0.55; text-decoration: line-through; }
+.funnel-foot { margin: 4px 14px 0; font-size: 0.8rem; font-weight: 600; color: var(--good); }
+.funnel .units { margin: 6px 14px 12px; }
+
+/* Map loading and small controls */
+.map-loading { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; color: var(--muted); font-weight: 600; background: linear-gradient(120deg, #eef1f6, #f8fafc, #eef1f6); background-size: 200% 100%; animation: sh 1.6s infinite; }
+.spinner.dark { border-color: rgba(15, 27, 45, 0.15); border-top-color: var(--brand); width: 22px; height: 22px; }

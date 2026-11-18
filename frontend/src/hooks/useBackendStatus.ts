@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { HEALTH_URL } from "../api";
+import { HEALTH_URL } from "@/api";
 
 export type BackendStatus = "checking" | "waking" | "online";
 

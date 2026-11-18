@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatMiles, toLocalInputValue } from "./format";
-import { heatWeightExpression, routeColor } from "./mapData";
+import { formatDuration, formatMiles, toLocalInputValue } from "@/lib/format";
+import { heatWeightExpression, routeColor } from "@/lib/mapData";
 
 describe("format", () => {
   it("formats durations", () => {
